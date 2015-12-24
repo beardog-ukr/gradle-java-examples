@@ -109,6 +109,7 @@ More examples to read:
  - and the javasrcript([node.js](http://nodejs.org/)) is used to convert YAML to INI. That's the weirdest part but it's a good opportunity to show how to use custom written gradle plugins to perform nodejs tasks.
 
 Following work will be done:
+
 1. Create temporary folder where the INI file will be generated. Maven standard does not define such case, but [Java Ranch](http://www.javaranch.com/build_standards.jsp) recommends to use `build/gen-src/` folder for such purposes
 2. Copy the geterator script (*settingsGenerator.js*) and YAML source (*config.yaml*) to this folder
 3. The `settingsGenerator.js` requires some third party nodejs modules. We keep this modules archived in `src/main/resources/settings/node_modules.tar.gz`. Now we have to extract this archive to the temporary folder.
