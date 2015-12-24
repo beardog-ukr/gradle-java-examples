@@ -1,0 +1,50 @@
+apply plugin: 'java'
+//============================================================================
+//== Generate settings file ==================================================
+//============================================================================
+def genSrcSettingsFolderStr = buildDir.getName() + '/gen-src/settings'
+def genSrcIniFilename = genSrcSettingsFolderStr + '/settings.ini'
+
+task prepareSettingsFolder() << {
+  def gf = new File(genSrcSettingsFolderStr)
+
+  if( !gf.exists() ) {
+    gf.mkdirs()
+  }
+}
+
+task generateSettings(type:Exec, dependsOn:'prepareSettingsFolder') {
+  ext.srcFile = file('src/main/bash/settings/config.yaml')
+  ext.destDir = new File(buildDir, '/gen-src/settings')
+
+  inputs.file srcFile
+  outputs.dir destDir
+
+  workingDir 'src/main/bash/settings'
+  commandLine './settingsGenerator.sh', './config.yaml ', '../../../../'+genSrcIniFilename
+
+  //store the output instead of printing to the console:
+  standardOutput = new ByteArrayOutputStream()
+  //extension method stopTomcat.output() can be used to obtain the output:
+  ext.output = {
+    return standardOutput.toString()
+  }
+}
+
+build.dependsOn('generateSettings') ;
+
+//============================================================================
+//= Building JAR =============================================================
+//============================================================================
+sourceCompatibility = 1.7
+version = '1.0'
+jar {
+  manifest {
+        attributes 'Implementation-Title': 'Delta Example',
+          'Implementation-Version': version,
+          'Main-Class': 'deltaApp.MainApp'
+  }
+
+  def iniFile = file(genSrcIniFilename)
+  from { iniFile }
+}

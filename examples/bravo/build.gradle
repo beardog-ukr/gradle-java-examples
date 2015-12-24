@@ -1,0 +1,47 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.7
+version = '1.0'
+
+jar {
+  from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
+task debugJar(type: Jar) {
+  manifest {
+        attributes 'Implementation-Title': 'Bravo Example',
+        	'Implementation-Version': version,
+        	'Main-Class': 'bravoApp.MainApp'
+  }
+
+  baseName = project.name + '-debug'
+  rename('logback-debug.xml', 'logback.xml')
+
+  with jar
+}
+
+task basicJar(type: Jar) {
+  manifest {
+        attributes 'Implementation-Title': 'Gradle Jar File Example',
+        	'Implementation-Version': version,
+        	'Main-Class': 'bravoApp.MainApp'
+  }
+
+  baseName = project.name + '-basic'
+  rename('logback-basic.xml', 'logback.xml')
+
+  with jar
+}
+
+jar.dependsOn('debugJar')
+jar.dependsOn('basicJar')
+
+//Get dependencies from Maven central repository
+repositories {
+    mavenCentral()
+}
+
+//Project dependencies
+dependencies {
+	compile 'ch.qos.logback:logback-classic:1.1.2'
+}

@@ -1,0 +1,9 @@
+# Imagine this is real yaml configuration file
+settings:
+
+ -
+  id: "One"
+  str: "First"
+ -
+  id: "Two"
+  str: "Second"

@@ -1,0 +1,102 @@
+
+//============================================================================
+apply plugin: 'groovy'
+
+//============================================================================
+//============================================================================
+import com.moowork.gradle.node.NodePlugin
+apply plugin: com.moowork.gradle.node.NodePlugin
+
+node {
+  // Version of node to use.
+  version = '4.2.1'
+
+  // Version of npm to use.
+//  npmVersion = '2.1.5'
+
+  // Base URL for fetching node distributions (change if you have a mirror).
+  distBaseUrl = 'https://nodejs.org/dist'
+
+  // If true, it will download node using above parameters.
+  // If false, it will try to use globally installed node.
+  download = false
+
+  // Set the work directory for unpacking node
+  //We'll not really install node.js for 'charlie' example, so this line is commented out
+//  workDir = file("${project.buildDir}/nodejs")
+
+  // Set the work directory where node_modules should be located
+//  nodeModulesDir = file("${project.projectDir}")
+}
+
+//============================================================================
+//============================================================================
+
+def genSrcSettingsFolderStr = buildDir.getName() + '/gen-src/settings'
+def genSrcIniFilename = genSrcSettingsFolderStr + '/settings.ini'
+
+
+task generateSettingsFolder() << {
+  def sf = new File(genSrcSettingsFolderStr)
+
+  if( !sf.exists() ) {
+    sf.mkdirs()
+  }
+}
+
+//
+task copySettingsSrc(type: Copy, dependsOn: generateSettingsFolder) {
+  from 'src/main/nodejs/settings/'
+  include '**/*.yaml'
+  include '**/*.js'
+
+  into genSrcSettingsFolderStr
+}
+
+//  Suppose our nodejs script will also need some other third party modules.
+//The node_modules folder was archived and now it will be extracled to
+//the generation folder
+task copySettingsNM(type: Copy, dependsOn: generateSettingsFolder) {
+   FileTree nmTree = tarTree('src/main/resources/settings/node_modules.tar.gz')
+   from nmTree
+
+   into genSrcSettingsFolderStr
+}
+
+
+//  Finally, this task generates settings.ini file.
+//  At least it pretends to do so
+task generateSettings( type: NodeTask,
+                       dependsOn: ['copySettingsSrc','copySettingsNM']) {
+  script = file(genSrcSettingsFolderStr + '/settingsGenerator.js')
+
+  args = ['-c', genSrcSettingsFolderStr+'/config.yaml',
+          '-r', genSrcSettingsFolderStr]
+}
+
+//============================================================================
+//= Building JAR =============================================================
+//============================================================================
+apply plugin: 'java'
+
+sourceCompatibility = 1.7
+version = '1.0'
+jar {
+  manifest {
+        attributes 'Implementation-Title': 'Charlie Example',
+          'Implementation-Version': version,
+          'Main-Class': 'charlieApp.MainApp'
+  }
+
+  baseName = project.name + '-debug'
+
+  // The "src/resources/settings" gets included by default, but de don't need it
+  exclude("settings/*")
+
+//  def iniTree = fileTree(genSrcSettingsFolderStr)
+//  iniTree.exclude "**/node_modules"
+//  iniTree.include "**/*.ini"
+//  iniTree.include "**/settings.ini"
+  def iniFile = file(genSrcIniFilename)
+  from { iniFile }
+}
